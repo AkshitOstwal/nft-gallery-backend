@@ -3,6 +3,18 @@
   "collection": "@nestjs/schematics",
   "sourceRoot": "src",
   "compilerOptions": {
-    "deleteOutDir": true
+    "deleteOutDir": true,
+    "webpack": true
+  },
+  "projects": {
+    "nft_details": {
+      "type": "library",
+      "root": "libs/nft_details",
+      "entryFile": "index",
+      "sourceRoot": "libs/nft_details/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/nft_details/tsconfig.lib.json"
+      }
+    }
   }
 }

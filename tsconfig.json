@@ -16,6 +16,14 @@
     "noImplicitAny": false,
     "strictBindCallApply": false,
     "forceConsistentCasingInFileNames": false,
-    "noFallthroughCasesInSwitch": false
+    "noFallthroughCasesInSwitch": false,
+    "paths": {
+      "@app/nft_details": [
+        "libs/nft_details/src"
+      ],
+      "@app/nft_details/*": [
+        "libs/nft_details/src/*"
+      ]
+    }
   }
 }
