@@ -1,10 +1,11 @@
+import { HttpModule } from '@nestjs/axios';
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
+import { NftDetailsModule } from './nft_details/nft_details.module';
+import { NftListModule } from './nft_list/nft_list.module';
 
 @Module({
-  imports: [],
-  controllers: [AppController],
-  providers: [AppService],
+  imports: [NftDetailsModule, NftListModule, HttpModule],
+  controllers: [],
+  providers: [],
 })
-export class AppModule {}
+export class AppModule { }
