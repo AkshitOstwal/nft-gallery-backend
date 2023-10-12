@@ -8,9 +8,33 @@ import { TokenListDto } from './dto/tokenList.dto';
 @Injectable()
 export class NftListService {
     constructor(private httpService: HttpService, private prisma: PrismaService) { }
-    async getList(address: string) {
-        const userAddress = "0x77016474B3FFf23611cB827efBADaEa44f10637c";
-        const response = await this.fetchDataFromAPI(userAddress);
+
+    async getList(userAddress: string, fetchLatest: boolean = false) {
+        if (fetchLatest) {
+            await this.fetchAndProcessResponse(userAddress);
+        }
+
+        const data = await this.prisma.userData.findUnique({ where: { address: userAddress }, include: { tokens: true } });
+        console.log("returning data\n length", data.tokens.length);
+
+        return this.toObject(data);
+
+    }
+
+    async fetchAndProcessResponse(userAddress: string, continuation?) {
+        const response = await this._fetchDataFromAPI(userAddress, continuation);
+
+        await this._processGetListResponse(response, userAddress);
+        console.log("completed 1st call\n",);
+
+        if (response.continuation ?? false) {
+            console.log("GOing in continuations\n",);
+
+            this.fetchAndProcessResponse(userAddress, response.continuation);
+        }
+    }
+
+    async _processGetListResponse(response: TokenListDto, userAddress: string) {
 
         let tokenList: NFTTokenDto[] = [];
         response.tokens.forEach(async (data) => {
@@ -40,7 +64,7 @@ export class NftListService {
             tokenList.push(nftToken);
 
             //create or update NFT Token data
-            this.prisma.createOrUpdateNFTTokens({ nftToken });
+            await this.prisma.createOrUpdateNFTTokens({ nftToken });
 
         })
 
@@ -63,26 +87,34 @@ export class NftListService {
         // }); //  create a filter list of token that are newly created and are not connected to userData
 
         // Create the UserData record if it doesn't exist
-        this.prisma.createOrUpdateUserData({ userAddress: userAddress, nftTokensToAdd: nftTokensToAdd });
-
-
-        return this.toObject(await this.prisma.userData.findUnique({ where: { address: userAddress }, include: { tokens: true } }));
-
+        await this.prisma.createOrUpdateUserData({ userAddress: userAddress, nftTokensToAdd: nftTokensToAdd });
     }
 
 
-    async fetchDataFromAPI(userAddress: string) {
-        const apiUrl = `https://api.reservoir.tools/users/${userAddress}/tokens/v7`;
+    async _fetchDataFromAPI(userAddress: string, continuation?: string) {
+        let apiUrl = `https://api.reservoir.tools/users/${userAddress}/tokens/v7`;
+
+        let params: { [key: string]: any } = {
+            "limit": 10,
+            'sortby': 'acquiredAt',
+        }
+        if (continuation) {
+            params.limit = 200;
+            params.continuation = continuation;
+        }
         const headers = {
             'x-api-key': '9dfc69d3-e18a-5235-be2e-d6dfeac2b8b1',
             'accept': '*/*' // Add other headers as needed
         };
 
-        const response: TokenListDto = await lastValueFrom(this.httpService.get(apiUrl, { headers }).pipe(map((response) => response.data)));
+        const response: TokenListDto = await lastValueFrom(this.httpService.get(apiUrl, { headers, params }).pipe(map((response) => response.data)));
+        console.log("response length = ", response.tokens.length);
+        console.log("response continuations=", response.continuation);
         return response;
 
     }
 
+    // since can't nestJS cant stringify BigInt used in balanceInWei
     toObject(val) {
         return JSON.parse(JSON.stringify(val, (key, value) =>
             typeof value === 'bigint'

@@ -70,4 +70,6 @@ export class FloorAskDto {
 
 export interface TokenListDto {
   tokens: TokensDto[];
+  continuation: string;
+
 }

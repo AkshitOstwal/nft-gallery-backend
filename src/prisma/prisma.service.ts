@@ -27,7 +27,7 @@ export class PrismaService extends PrismaClient {
             create: {
                 address: userAddress,
                 joinedAt: new Date().toISOString(),
-                updatedAt: nftTokensToAdd[0].dateOfAcquisition,
+                updatedAt: nftTokensToAdd[0]?.dateOfAcquisition ?? new Date(),
                 // Other UserData fields
                 tokens: {
                     connect: nftTokensToAdd.map((token) => ({

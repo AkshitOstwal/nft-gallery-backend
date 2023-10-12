@@ -7,8 +7,11 @@ export class NftListController {
     }
 
     @Get('getList')
-    getList(@Query("address") address: string) {
-        return this.NftListService.getList(address);
+    getList(
+        @Query("address") address: string,
+        @Query("fetchLatest") fetchLatest?: boolean
+    ) {
+        return this.NftListService.getList(address, fetchLatest);
     }
 
 

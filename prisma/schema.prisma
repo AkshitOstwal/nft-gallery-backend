@@ -24,19 +24,19 @@ model NFTToken {
   id                    String    @id
   tokenId               String
   contractAddress       String
-  name                  String
+  name                  String?
   chainId               Int
-  collectionName        String
-  image                 String
-  imageSmall            String
-  floorPriceUSD         Decimal
-  floorPriceWEI         BigInt
+  collectionName        String?
+  image                 String?
+  imageSmall            String?
+  floorPriceUSD         Decimal?
+  floorPriceWEI         BigInt?
   itemCount             Int
-  totalCostBasisUSD     Decimal
-  totalCostBasisWEI     BigInt
-  totalCurrentValueUSD  Decimal
-  totalCurrentValueWEI  BigInt
-  unrealizedGainsLosses Int
+  totalCostBasisUSD     Decimal?
+  totalCostBasisWEI     BigInt?
+  totalCurrentValueUSD  Decimal?
+  totalCurrentValueWEI  BigInt?
+  unrealizedGainsLosses Int?
   dateOfAcquisition     DateTime
   UserData              UserData? @relation(fields: [userDataAddress], references: [address])
   userDataAddress       String?
