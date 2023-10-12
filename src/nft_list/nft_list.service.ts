@@ -7,6 +7,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { NFTTokenDto } from './dto';
 import { SaleListDTO, TokenListDto } from './dto/tokenList.dto';
 
+
 @Injectable()
 export class NftListService {
     PAGE_SIZE = 20;
@@ -125,7 +126,7 @@ export class NftListService {
 
 
     async _fetchDataFromAPI(userAddress: string, continuation?: string) {
-        let apiUrl = `https://api.reservoir.tools/users/${userAddress}/tokens/v7`;
+        let apiUrl = `${process.env.BASE_API_URL}/users/${userAddress}/tokens/v7`;
 
         let params: { [key: string]: any } = {
             //TODO change back to 20 if going for async
@@ -136,8 +137,9 @@ export class NftListService {
             params.limit = 200;
             params.continuation = continuation;
         }
+
         const headers = {
-            'x-api-key': '9dfc69d3-e18a-5235-be2e-d6dfeac2b8b1',
+            'x-api-key': process.env.API_KEY,
             'accept': '*/*' // Add other headers as needed
         };
 
@@ -194,10 +196,10 @@ export class NftListService {
     async _fetchCostBasisFromAPI(tokensParams) {
         const tokensParam = tokensParams.map(({ token, tokenId }) => `${token}:${tokenId}`).join('&tokens=');
 
-        let apiUrl = `https://api.reservoir.tools/sales/v6?tokens=${tokensParam}`;
+        let apiUrl = `${process.env.BASE_API_URL}/sales/v6?tokens=${tokensParam}`;
 
         const headers = {
-            'x-api-key': '9dfc69d3-e18a-5235-be2e-d6dfeac2b8b1',
+            'x-api-key': process.env.API_KEY,
             'accept': '*/*' // Add other headers as needed
         };
         try {

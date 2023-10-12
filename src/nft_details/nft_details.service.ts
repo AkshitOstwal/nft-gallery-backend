@@ -54,10 +54,10 @@ export class NftDetailsService {
     }
 
     async _fetchFloorPriceFromAPI(userAddress: string, contractAddress: string, tokenId: string) {
-        let apiUrl = `https://api.reservoir.tools/users/${userAddress}/tokens/v7?tokens=${contractAddress}:${tokenId}`;
+        let apiUrl = `${process.env.BASE_API_URL}/users/${userAddress}/tokens/v7?tokens=${contractAddress}:${tokenId}`;
 
         const headers = {
-            'x-api-key': '9dfc69d3-e18a-5235-be2e-d6dfeac2b8b1',
+            'x-api-key': process.env.API_KEY,
             'accept': '*/*' // Add other headers as needed
         };
 
@@ -66,10 +66,10 @@ export class NftDetailsService {
     }
 
     async _fetchCostBasisFromAPI(contractAddress: string, tokenId: string) {
-        let apiUrl = `https://api.reservoir.tools/sales/v6?tokens=${contractAddress}:${tokenId}`;
+        let apiUrl = `${process.env.BASE_API_URL}/sales/v6?tokens=${contractAddress}:${tokenId}`;
 
         const headers = {
-            'x-api-key': '9dfc69d3-e18a-5235-be2e-d6dfeac2b8b1',
+            'x-api-key': process.env.API_KEY,
             'accept': '*/*' // Add other headers as needed
         };
         try {

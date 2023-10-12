@@ -7,7 +7,7 @@ export class PrismaService extends PrismaClient {
         super({
             datasources: {
                 db: {
-                    url: 'postgresql://postgres:123@localhost:5432/nft-gallery?schema=public'
+                    url: process.env.DATABASE_URL
                 }
             }
         })
