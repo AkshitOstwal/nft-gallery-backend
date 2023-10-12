@@ -12,4 +12,40 @@ export class PrismaService extends PrismaClient {
             }
         })
     }
+
+    async createOrUpdateNFTTokens({ nftToken }) {
+        await this.nFTToken.upsert({
+            where: { id: `${nftToken.contractAddress}:${nftToken.tokenId}:${nftToken.chainId}` },
+            create: nftToken as any,
+            update: nftToken as any,
+        });
+    }
+
+    async createOrUpdateUserData({ userAddress, nftTokensToAdd }) {
+        const userData = await this.userData.upsert({
+            where: { address: userAddress },
+            create: {
+                address: userAddress,
+                joinedAt: new Date().toISOString(),
+                updatedAt: nftTokensToAdd[0].dateOfAcquisition,
+                // Other UserData fields
+                tokens: {
+                    connect: nftTokensToAdd.map((token) => ({
+                        id: token.id,
+                    })) as any,// Create NFTToken records
+                },
+            },
+            update: {
+                // Update UserData fields if the record already exists
+                tokens: {
+                    connect: nftTokensToAdd.map((token) => ({
+                        id: token.id,
+                    })) as any,// Create NFTToken records
+                },
+            },
+            include: {
+                tokens: true, // Include associated tokens in the result
+            },
+        });
+    }
 }
