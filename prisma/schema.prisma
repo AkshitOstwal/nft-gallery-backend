@@ -39,6 +39,7 @@ model NFTToken {
   totalCurrentValueWEI  BigInt?
   unrealizedGainsLosses Int?
   dateOfAcquisition     DateTime
+  rarityRank            Int?
   UserData              UserData? @relation(fields: [userDataAddress], references: [address])
   userDataAddress       String?
 }

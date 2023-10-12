@@ -15,5 +15,6 @@ export interface NFTTokenDto {
     totalCurrentValueUSD: number | null;
     totalCurrentValueWEI: number | null;
     unrealizedGainsLosses: number | null;
+    rarityRank: number | null;
     dateOfAcquisition: Date;
 }

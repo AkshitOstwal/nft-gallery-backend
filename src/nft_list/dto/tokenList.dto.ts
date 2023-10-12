@@ -71,5 +71,71 @@ export class FloorAskDto {
 export interface TokenListDto {
   tokens: TokensDto[];
   continuation: string;
+}
+export class SaleDTO {
+  id: string;
+  saleId: string;
+  token: {
+    contract: string;
+    tokenId: string;
+    name: string | null;
+    image: string | null;
+    collection: {
+      id: string | null;
+      name: string | null;
+    };
+  };
+  orderId: string;
+  orderSource: string;
+  orderSide: string;
+  orderKind: string;
+  from: string;
+  to: string;
+  amount: string;
+  fillSource: string;
+  block: number;
+  txHash: string;
+  logIndex: number;
+  batchIndex: number;
+  timestamp: number;
+  price: {
+    currency: {
+      contract: string;
+      name: string;
+      symbol: string;
+      decimals: number;
+    };
+    amount: {
+      raw: string;
+      decimal: number;
+      usd: number;
+      native: number;
+    };
+    netAmount: {
+      raw: string;
+      decimal: number;
+      usd: number;
+      native: number;
+    };
+  };
+  washTradingScore: number;
+  marketplaceFeeBps: number;
+  paidFullRoyalty: boolean;
+  feeBreakdown: [
+    {
+      kind: string;
+      bps: number;
+      recipient: string;
+      rawAmount: string;
+      source: string;
+    }
+  ];
+  isDeleted: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
 
+export class SaleListDTO {
+  sales: SaleDTO[];
+  continuation: string | null;
 }

@@ -1,9 +1,10 @@
 import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
+import { Decimal } from '@prisma/client/runtime/library';
 import { lastValueFrom, map } from 'rxjs';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { NFTTokenDto } from './dto';
-import { TokenListDto } from './dto/tokenList.dto';
+import { SaleListDTO, TokenListDto } from './dto/tokenList.dto';
 
 @Injectable()
 export class NftListService {
@@ -41,7 +42,7 @@ export class NftListService {
 
         await this._processGetListResponse(response, userAddress);
         console.log("completed 1st call\n",);
-
+        await this._fetchSalesData(response, userAddress);
         if (response.continuation ?? false) {
             console.log("GOing in continuations\n",);
 
@@ -56,6 +57,10 @@ export class NftListService {
             const token = data.token;
             const ownership = data.ownership;
             const collection = token.collection;
+
+            // const tokenActivity: SaleListDTO = await this._fetchCostBasisFromAPI(token.contract, token.tokenId)
+            // const thisUserSales = tokenActivity?.sales?.find((dto) => dto.to.toLowerCase() === userAddress.toLowerCase())
+
             const nftToken: NFTTokenDto = {
                 id: `${token.contract}:${token.tokenId}:${token.chainId}`,
                 chainId: token.chainId,
@@ -69,11 +74,12 @@ export class NftListService {
                 itemCount: Number(ownership.tokenCount),
                 name: token.name,
                 tokenId: token.tokenId,
+                rarityRank: token.rarityRank,
                 totalCostBasisUSD: 0,
                 totalCostBasisWEI: 0,
-                totalCurrentValueUSD: 0,
-                unrealizedGainsLosses: 0,
-                totalCurrentValueWEI: 0,
+                totalCurrentValueUSD: 0 * Number(ownership.tokenCount),
+                unrealizedGainsLosses: (collection.floorAskPrice?.amount?.usd ?? 0) - 0,
+                totalCurrentValueWEI: (0 * Number(ownership.tokenCount)),
             }
 
             tokenList.push(nftToken);
@@ -106,6 +112,7 @@ export class NftListService {
     }
 
 
+
     async _fetchDataFromAPI(userAddress: string, continuation?: string) {
         let apiUrl = `https://api.reservoir.tools/users/${userAddress}/tokens/v7`;
 
@@ -128,6 +135,74 @@ export class NftListService {
         return response;
 
     }
+
+    async _fetchSalesData(response: TokenListDto, userAddress) {
+
+        let tokenAndIds = [];
+
+        response.tokens.forEach((dto) => {
+            tokenAndIds.push({ token: dto.token.contract, tokenId: dto.token.tokenId })
+        })
+
+        const maxElementsPerSublist = 20;
+
+        const sublists = [];
+        for (let i = 0; i < tokenAndIds.length; i += maxElementsPerSublist) {
+            const sublist = tokenAndIds.slice(i, i + maxElementsPerSublist);
+            sublists.push(sublist);
+        }
+        console.log({ sublists });
+
+        await sublists.forEach(async (item) => {
+            const res = await this._fetchCostBasisFromAPI(item);
+
+
+            res.sales.forEach(async (sale) => {
+                //missing case of rebuying nft
+                if (sale.to.toLowerCase() == userAddress.toLowerCase()) {
+
+                    let thisToken = response.tokens.find(
+                        (ele) => { return (ele.token.contract == sale.token.contract && ele.token.tokenId == sale.token.tokenId); });
+                    let nftToken = await this.prisma.nFTToken.findUnique({ where: { id: `${thisToken.token.contract}:${thisToken.token.tokenId}:${thisToken.token.chainId}` } });
+
+                    console.log(`foundNFT ${nftToken.id}`);
+                    nftToken.totalCostBasisUSD = new Decimal(sale?.price?.amount?.usd ?? 0);
+                    nftToken.totalCostBasisWEI = BigInt(sale?.price?.amount?.raw ?? 0);
+                    nftToken.totalCurrentValueUSD = new Decimal((sale?.price?.amount?.usd ?? 0) * nftToken.itemCount);
+                    nftToken.unrealizedGainsLosses = (nftToken.floorPriceUSD.toNumber() - sale?.price?.amount?.usd ?? 0);
+                    nftToken.totalCurrentValueWEI = BigInt(Number(sale?.price?.amount?.raw ?? 0) * nftToken.itemCount);
+
+                    await this.prisma.createOrUpdateNFTTokens({ nftToken });
+                    console.log("this ran");
+                }
+            })
+
+        })
+
+    }
+
+    async _fetchCostBasisFromAPI(tokensParams) {
+        const tokensParam = tokensParams.map(({ token, tokenId }) => `${token}:${tokenId}`).join('&tokens=');
+
+        let apiUrl = `https://api.reservoir.tools/sales/v6?tokens=${tokensParam}`;
+
+        const headers = {
+            'x-api-key': '9dfc69d3-e18a-5235-be2e-d6dfeac2b8b1',
+            'accept': '*/*' // Add other headers as needed
+        };
+        try {
+            await new Promise((resolve) => {
+                setTimeout(resolve, 300);
+            });
+            const response: SaleListDTO = await lastValueFrom(this.httpService.get(apiUrl, { headers }).pipe(map((response) => response.data)));
+            console.log("response.sales.length:", response.sales.length);
+            return response;
+        } catch (error) {
+            console.log(error)
+        }
+
+    }
+
 
     // since can't nestJS cant stringify BigInt used in balanceInWei
     toObject(val) {
