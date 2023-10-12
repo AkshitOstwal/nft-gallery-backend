@@ -7,14 +7,29 @@ import { TokenListDto } from './dto/tokenList.dto';
 
 @Injectable()
 export class NftListService {
+    PAGE_SIZE = 20;
     constructor(private httpService: HttpService, private prisma: PrismaService) { }
 
-    async getList(userAddress: string, fetchLatest: boolean = false) {
+    async getList(userAddress: string, page: number = 1, fetchLatest: boolean = false) {
+        let tokensCount = (await this.prisma.currentUserData(userAddress)).tokensCount;
+        if (page > tokensCount / this.PAGE_SIZE) {
+            page = Math.ceil((tokensCount / this.PAGE_SIZE))
+        }
         if (fetchLatest) {
             await this.fetchAndProcessResponse(userAddress);
         }
 
-        const data = await this.prisma.userData.findUnique({ where: { address: userAddress }, include: { tokens: true } });
+        const data = await this.prisma.userData.findUnique({
+            where: { address: userAddress }, include: {
+                tokens: {
+                    orderBy: {
+                        dateOfAcquisition: 'desc'
+                    },
+                    take: this.PAGE_SIZE,
+                    skip: (page - 1) * this.PAGE_SIZE,
+                }
+            }
+        });
         console.log("returning data\n length", data.tokens.length);
 
         return this.toObject(data);
@@ -108,7 +123,7 @@ export class NftListService {
         };
 
         const response: TokenListDto = await lastValueFrom(this.httpService.get(apiUrl, { headers, params }).pipe(map((response) => response.data)));
-        console.log("response length = ", response.tokens.length);
+        console.log("resiviour response length = ", response.tokens.length);
         console.log("response continuations=", response.continuation);
         return response;
 

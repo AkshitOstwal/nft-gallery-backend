@@ -11,9 +11,10 @@ datasource db {
 }
 
 model UserData {
-  address   String   @id
-  joinedAt  DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  address     String   @id
+  joinedAt    DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  tokensCount Int      @default(0)
 
   tokens NFTToken[]
   // Token  Token[]
