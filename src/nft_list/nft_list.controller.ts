@@ -8,7 +8,6 @@ export class NftListController {
 
     @Get('getList')
     getList(@Query("address") address: string) {
-        console.log({ address });
         return this.NftListService.getList(address);
     }
 

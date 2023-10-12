@@ -1,0 +1,112 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model UserData {
+  address   String   @id
+  joinedAt  DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tokens NFTToken[]
+  // Token  Token[]
+}
+
+//shoter data that is needed
+model NFTToken {
+  id                    String    @id
+  tokenId               String
+  contractAddress       String
+  name                  String
+  chainId               Int
+  collectionName        String
+  image                 String
+  imageSmall            String
+  floorPriceUSD         Decimal
+  floorPriceWEI         BigInt
+  itemCount             Int
+  totalCostBasisUSD     Decimal
+  totalCostBasisWEI     BigInt
+  totalCurrentValueUSD  Decimal
+  totalCurrentValueWEI  BigInt
+  unrealizedGainsLosses Int
+  dateOfAcquisition     DateTime
+  UserData              UserData? @relation(fields: [userDataAddress], references: [address])
+  userDataAddress       String?
+}
+
+model Token {
+  id                 Int        @id @default(autoincrement())
+  chainId            Int
+  contract           String
+  tokenId            String
+  kind               String
+  name               String
+  image              String
+  imageSmall         String
+  imageLarge         String
+  rarityScore        Int?
+  rarityRank         Int?
+  supply             Int?
+  remainingSupply    Int?
+  media              String?
+  isFlagged          Boolean
+  lastFlagUpdate     DateTime?
+  lastFlagChange     DateTime?
+  collection         Collection @relation(fields: [collectionId], references: [id])
+  collectionId       String
+  lastAppraisalValue Float?
+  // UserData           UserData?  @relation(fields: [userDataAddress], references: [address])
+  userDataAddress    String?
+}
+
+model Collection {
+  id                        String   @id
+  name                      String
+  imageUrl                  String
+  openseaVerificationStatus String
+  floorAskPrice             NFTPrice @relation(fields: [nFTPriceId], references: [id])
+  royaltiesBps              Int
+  royalties                 String[]
+  Token                     Token[]
+  nFTPriceId                Int
+}
+
+model NFTPrice {
+  id         Int          @id @default(autoincrement())
+  currency   Currency     @relation(fields: [currencyId], references: [id])
+  currencyId Int
+  amount     String
+  maker      String?
+  kind       String?
+  validFrom  DateTime?
+  validUntil DateTime?
+  source     String?
+  Collection Collection[]
+  Ownership  Ownership[]
+}
+
+model Currency {
+  id       Int        @id @default(autoincrement())
+  contract String
+  name     String
+  symbol   String
+  decimals Int
+  NFTPrice NFTPrice[]
+}
+
+model Ownership {
+  id          Int       @id @default(autoincrement())
+  tokenCount  String
+  onSaleCount String
+  floorAsk    NFTPrice? @relation(fields: [nFTPriceId], references: [id])
+  acquiredAt  DateTime
+  nFTPriceId  Int?
+}
