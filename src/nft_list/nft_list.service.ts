@@ -57,7 +57,7 @@ export class NftListService {
         if (response.continuation ?? false) {
             console.log("GOing in continuations\n",);
 
-            //TODO remove await here
+            //TODO remove await here 
             await this.fetchAndProcessResponse(userAddress, response.continuation);
         }
     }
@@ -172,7 +172,7 @@ export class NftListService {
 
 
             res.sales.forEach(async (sale) => {
-                //missing case of rebuying nft
+                // TODO missing case of rebuying nft
                 if (sale.to.toLowerCase() == userAddress.toLowerCase()) {
 
                     let thisToken = response.tokens.find(
