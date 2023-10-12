@@ -11,14 +11,19 @@ export class NftListService {
     PAGE_SIZE = 20;
     constructor(private httpService: HttpService, private prisma: PrismaService) { }
 
-    async getList(userAddress: string, page: number = 1, fetchLatest: boolean = false) {
-        let tokensCount = (await this.prisma.currentUserData(userAddress)).tokensCount;
+    async getList(userAddress: string, page: number = 1, fetchLatest: string = 'false') {
+        let tokensCount = ((await this.prisma.currentUserData(userAddress))?.tokensCount ?? 0);
         if (page > tokensCount / this.PAGE_SIZE) {
             page = Math.ceil((tokensCount / this.PAGE_SIZE))
         }
-        if (fetchLatest) {
+        if (page <= 0) {
+            page = 1;
+        }
+
+        if (fetchLatest && fetchLatest.toLowerCase() === 'true') {
             await this.fetchAndProcessResponse(userAddress);
         }
+
 
         const data = await this.prisma.userData.findUnique({
             where: { address: userAddress }, include: {
@@ -31,7 +36,9 @@ export class NftListService {
                 }
             }
         });
+
         console.log("returning data\n length", data.tokens.length);
+        console.log("returning data tokensCount", data.tokensCount);
 
         return this.toObject(data);
 
@@ -41,12 +48,15 @@ export class NftListService {
         const response = await this._fetchDataFromAPI(userAddress, continuation);
 
         await this._processGetListResponse(response, userAddress);
+
+
         console.log("completed 1st call\n",);
         await this._fetchSalesData(response, userAddress);
         if (response.continuation ?? false) {
             console.log("GOing in continuations\n",);
 
-            this.fetchAndProcessResponse(userAddress, response.continuation);
+            //TODO remove await here
+            await this.fetchAndProcessResponse(userAddress, response.continuation);
         }
     }
 
@@ -117,7 +127,8 @@ export class NftListService {
         let apiUrl = `https://api.reservoir.tools/users/${userAddress}/tokens/v7`;
 
         let params: { [key: string]: any } = {
-            "limit": 10,
+            //TODO change back to 20 if going for async
+            "limit": 200,
             'sortby': 'acquiredAt',
         }
         if (continuation) {
@@ -165,7 +176,6 @@ export class NftListService {
                         (ele) => { return (ele.token.contract == sale.token.contract && ele.token.tokenId == sale.token.tokenId); });
                     let nftToken = await this.prisma.nFTToken.findUnique({ where: { id: `${thisToken.token.contract}:${thisToken.token.tokenId}:${thisToken.token.chainId}` } });
 
-                    console.log(`foundNFT ${nftToken.id}`);
                     nftToken.totalCostBasisUSD = new Decimal(sale?.price?.amount?.usd ?? 0);
                     nftToken.totalCostBasisWEI = BigInt(sale?.price?.amount?.raw ?? 0);
                     nftToken.totalCurrentValueUSD = new Decimal((sale?.price?.amount?.usd ?? 0) * nftToken.itemCount);
@@ -173,7 +183,6 @@ export class NftListService {
                     nftToken.totalCurrentValueWEI = BigInt(Number(sale?.price?.amount?.raw ?? 0) * nftToken.itemCount);
 
                     await this.prisma.createOrUpdateNFTTokens({ nftToken });
-                    console.log("this ran");
                 }
             })
 
@@ -191,14 +200,15 @@ export class NftListService {
             'accept': '*/*' // Add other headers as needed
         };
         try {
-            await new Promise((resolve) => {
-                setTimeout(resolve, 300);
-            });
+            // await new Promise((resolve) => {
+            //     setTimeout(resolve, 300);
+            // });
             const response: SaleListDTO = await lastValueFrom(this.httpService.get(apiUrl, { headers }).pipe(map((response) => response.data)));
             console.log("response.sales.length:", response.sales.length);
             return response;
         } catch (error) {
             console.log(error)
+            throw error;
         }
 
     }

@@ -34,7 +34,11 @@ export class PrismaService extends PrismaClient {
                 address: userAddress,
                 joinedAt: new Date().toISOString(),
                 updatedAt: nftTokensToAdd[0]?.dateOfAcquisition ?? new Date(),
-                tokensCount: nftTokensToAdd.length,
+                tokensCount: (await this.userData.findUnique({
+                    where: { address: userAddress }, include: {
+                        tokens: true
+                    }
+                }))?.tokensCount ?? 0 + nftTokensToAdd.length,
                 // Other UserData fields
                 tokens: {
                     connect: nftTokensToAdd.map((token) => ({
@@ -44,7 +48,7 @@ export class PrismaService extends PrismaClient {
             },
             update: {
                 // Update UserData fields if the record already exists
-                tokensCount: (await this.userData.findUnique({ where: { address: userAddress } })).tokensCount + nftTokensToAdd.length,
+                tokensCount: (await this.userData.findUnique({ where: { address: userAddress }, include: { tokens: true } }))?.tokensCount ?? 0 + nftTokensToAdd.length,
                 tokens: {
                     connect: nftTokensToAdd.map((token) => ({
                         id: token.id,
