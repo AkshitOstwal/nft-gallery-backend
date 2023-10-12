@@ -2,6 +2,7 @@ import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 import { Decimal } from '@prisma/client/runtime/library';
 import { lastValueFrom, map } from 'rxjs';
+import { toObject } from 'src/helper';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { NFTTokenDto } from './dto';
 import { SaleListDTO, TokenListDto } from './dto/tokenList.dto';
@@ -40,7 +41,7 @@ export class NftListService {
         console.log("returning data\n length", data.tokens.length);
         console.log("returning data tokensCount", data.tokensCount);
 
-        return this.toObject(data);
+        return toObject(data);
 
     }
 
@@ -215,12 +216,6 @@ export class NftListService {
 
 
     // since can't nestJS cant stringify BigInt used in balanceInWei
-    toObject(val) {
-        return JSON.parse(JSON.stringify(val, (key, value) =>
-            typeof value === 'bigint'
-                ? value.toString()
-                : value // return everything else unchanged
-        ));
-    }
+
 
 }
