@@ -39,13 +39,13 @@ export class NftDetailsService {
 
         const sale = salesData.sales.find((sale) => { return sale.to.toLowerCase() == nftToken.userDataAddress.toLowerCase() });
 
+        nftToken.floorPriceUSD = new Decimal(floorPriceToken.token.collection?.floorAskPrice?.amount?.usd ?? 0);
+        nftToken.floorPriceWEI = BigInt(floorPriceToken.token.collection?.floorAskPrice?.amount?.raw ?? 0);
         nftToken.totalCostBasisUSD = new Decimal(sale?.price?.amount?.usd ?? 0);
         nftToken.totalCostBasisWEI = BigInt(sale?.price?.amount?.raw ?? 0);
         nftToken.totalCurrentValueUSD = new Decimal((sale?.price?.amount?.usd ?? 0) * nftToken.itemCount);
         nftToken.unrealizedGainsLosses = (nftToken.floorPriceUSD.toNumber() - sale?.price?.amount?.usd ?? 0);
         nftToken.totalCurrentValueWEI = BigInt(Number(sale?.price?.amount?.raw ?? 0) * nftToken.itemCount);
-        nftToken.floorPriceUSD = new Decimal(floorPriceToken.token.collection?.floorAskPrice?.amount?.usd ?? 0);
-        nftToken.floorPriceWEI = BigInt(floorPriceToken.token.collection?.floorAskPrice?.amount?.raw ?? 0);
 
         await this.prisma.createOrUpdateNFTTokens({ nftToken });
 

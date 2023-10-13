@@ -13,6 +13,9 @@ export class PrismaService extends PrismaClient {
         })
     }
 
+    public async findTokenCount(userAddress) {
+        return (await this.userData.findUnique({ where: { address: userAddress }, include: { tokens: true } })).tokens.length;
+    }
 
     public async currentUserData(userAddress) {
         return await this.userData.findUnique({ where: { address: userAddress }, });
@@ -48,7 +51,7 @@ export class PrismaService extends PrismaClient {
             },
             update: {
                 // Update UserData fields if the record already exists
-                tokensCount: (await this.userData.findUnique({ where: { address: userAddress }, include: { tokens: true } }))?.tokensCount ?? 0 + nftTokensToAdd.length,
+                tokensCount: (await this.userData.findUnique({ where: { address: userAddress }, include: { tokens: true } }))?.tokens?.length ?? 0 + nftTokensToAdd.length,
                 tokens: {
                     connect: nftTokensToAdd.map((token) => ({
                         id: token.id,
