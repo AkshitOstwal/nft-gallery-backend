@@ -27,6 +27,7 @@ export class NftListService {
         }
 
 
+
         const data = await this.prisma.userData.findUnique({
             where: { address: userAddress }, include: {
                 tokens: {
@@ -39,8 +40,8 @@ export class NftListService {
             }
         });
 
-        console.log("returning data\n length", data.tokens.length);
-        console.log("returning data tokensCount", data.tokensCount);
+        console.log("returning data\n length", data?.tokens.length);
+        console.log("returning data tokensCount", data?.tokensCount);
 
         return toObject(data);
 
@@ -65,7 +66,7 @@ export class NftListService {
     async _processGetListResponse(response: TokenListDto, userAddress: string) {
 
         let tokenList: NFTTokenDto[] = [];
-        response.tokens.forEach(async (data) => {
+        response?.tokens?.forEach(async (data) => {
             const token = data.token;
             const ownership = data.ownership;
             const collection = token.collection;
@@ -144,8 +145,8 @@ export class NftListService {
         };
 
         const response: TokenListDto = await lastValueFrom(this.httpService.get(apiUrl, { headers, params }).pipe(map((response) => response.data)));
-        console.log("resiviour response length = ", response.tokens.length);
-        console.log("response continuations=", response.continuation);
+        console.log("resiviour response length = ", response?.tokens.length);
+        console.log("response continuations=", response?.continuation);
         return response;
 
     }
@@ -154,7 +155,7 @@ export class NftListService {
 
         let tokenAndIds = [];
 
-        response.tokens.forEach((dto) => {
+        response?.tokens?.forEach((dto) => {
             tokenAndIds.push({ token: dto.token.contract, tokenId: dto.token.tokenId })
         })
 
